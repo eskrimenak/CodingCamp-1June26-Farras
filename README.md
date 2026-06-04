@@ -30,7 +30,6 @@ A simple life dashboard built with HTML, CSS, and Vanilla JavaScript.
 
 ```txt
 CodingCamp-18May26-MuhammadFarrasZuhair/
-├── .kiro/
 ├── css/
 │   └── style.css
 ├── js/
