@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>To-Do List Life Dashboard</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="hero card">
+      <div class="hero-actions">
+        <button id="themeToggleBtn" class="icon-btn" type="button" aria-label="Toggle light or dark mode">🌙</button>
+      </div>
+
+      <p class="eyebrow">Life Dashboard</p>
+      <h1 id="clock">00:00:00</h1>
+      <p id="dateText" class="date-text">Loading date...</p>
+      <h2 id="greetingText">Good Day</h2>
+
+      <form id="nameForm" class="inline-form" autocomplete="off">
+        <input id="nameInput" type="text" placeholder="Your name..." maxlength="24" />
+        <button type="submit">Save Name</button>
+      </form>
+    </section>
+
+    <section class="dashboard-grid">
+      <section class="card timer-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Pomodoro</p>
+            <h2>Focus Timer</h2>
+          </div>
+          <span id="timerStatus" class="pill">Ready</span>
+        </div>
+
+        <div id="timerDisplay" class="timer-display">25:00</div>
+
+        <form id="timerSettingForm" class="inline-form timer-setting" autocomplete="off">
+          <input id="timerMinutesInput" type="number" min="1" max="180" placeholder="25" />
+          <button type="submit">Set Minutes</button>
+        </form>
+
+        <div class="button-row">
+          <button id="startTimerBtn" class="primary-btn" type="button">Start</button>
+          <button id="stopTimerBtn" type="button">Stop</button>
+          <button id="resetTimerBtn" type="button">Reset</button>
+        </div>
+      </section>
+
+      <section class="card tasks-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Daily Plan</p>
+            <h2>Tasks</h2>
+          </div>
+          <button id="sortTasksBtn" type="button">Sort</button>
+        </div>
+
+        <form id="taskForm" class="task-form" autocomplete="off">
+          <input id="taskInput" type="text" placeholder="Add a new task..." maxlength="80" />
+          <button class="primary-btn" type="submit">Add</button>
+        </form>
+
+        <p id="taskMessage" class="message"></p>
+        <ul id="taskList" class="task-list"></ul>
+      </section>
+
+      <section class="card links-card">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">Shortcut</p>
+            <h2>Quick Links</h2>
+          </div>
+        </div>
+
+        <form id="linkForm" class="link-form" autocomplete="off">
+          <input id="linkNameInput" type="text" placeholder="Link name" maxlength="28" />
+          <input id="linkUrlInput" type="url" placeholder="https://example.com" />
+          <button class="primary-btn" type="submit">Add Link</button>
+        </form>
+
+        <p id="linkMessage" class="message"></p>
+        <div id="quickLinks" class="quick-links"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="js/script.js"></script>
+</body>
+</html>
