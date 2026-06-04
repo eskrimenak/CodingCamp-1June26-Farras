@@ -1,6 +1,5 @@
-<<<<<<< HEAD
 # CodingCamp-1June26-Farras
-=======
+
 # To-Do List Life Dashboard
 
 A simple life dashboard built with HTML, CSS, and Vanilla JavaScript.
