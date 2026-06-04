@@ -50,4 +50,4 @@ No backend server is required.
 - CSS
 - Vanilla JavaScript
 - Browser Local Storage API
->>>>>>> dc2c4cd (Coding Camp Requierement)
+
