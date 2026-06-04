@@ -146,9 +146,18 @@ function renderTimer() {
   timerMinuteInput.placeholder = String(timerMinutes);
 }
 
+function setActiveTimerButton(activeButton) {
+  // Biar tombol yang terakhir dipakai kelihatan jelas.
+  [startTimerButton, stopTimerButton, resetTimerButton].forEach(function (button) {
+    button.classList.toggle("is-active", button === activeButton);
+  });
+}
+
 function startTimer() {
   // Cegah timer dobel kalau tombol Start ditekan berkali-kali.
   if (timerIntervalId !== null) return;
+
+  setActiveTimerButton(startTimerButton);
 
   timerIntervalId = setInterval(function () {
     if (timerSecondsLeft <= 0) {
@@ -165,12 +174,15 @@ function startTimer() {
 function stopTimer() {
   clearInterval(timerIntervalId);
   timerIntervalId = null;
+  setActiveTimerButton(stopTimerButton);
 }
 
 function resetTimer() {
-  stopTimer();
+  clearInterval(timerIntervalId);
+  timerIntervalId = null;
   timerSecondsLeft = timerMinutes * 60;
   renderTimer();
+  setActiveTimerButton(resetTimerButton);
 }
 
 startTimerButton.addEventListener("click", startTimer);
@@ -362,6 +374,7 @@ taskForm.addEventListener("submit", function (event) {
 sortTasksButton.addEventListener("click", function () {
   isSortDoneFirst = !isSortDoneFirst;
   sortTasksButton.textContent = isSortDoneFirst ? "Unsort" : "Sort";
+  sortTasksButton.classList.toggle("is-active", isSortDoneFirst);
   renderTasks();
 });
 

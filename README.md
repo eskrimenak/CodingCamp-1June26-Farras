@@ -27,6 +27,8 @@ Project ini dibuat sebagai tugas CodingCamp: **To-Do List Life Dashboard**.
 
 ```txt
 .
+├── .kiro/
+│   └── spec.md
 ├── css/
 │   └── style.css
 ├── js/
