@@ -1,60 +1,26 @@
+// Key untuk data yang disimpan di browser.
+
 const STORAGE_KEYS = {
-  tasks: "lifeDashboard.tasks",
-  links: "lifeDashboard.links",
-  name: "lifeDashboard.name",
-  theme: "lifeDashboard.theme",
-  timerMinutes: "lifeDashboard.timerMinutes"
+  name: "lifeDashboardName",
+  tasks: "lifeDashboardTasks",
+  links: "lifeDashboardLinks",
+  theme: "lifeDashboardTheme",
+  timerMinutes: "lifeDashboardTimerMinutes"
 };
 
-const DEFAULT_LINKS = [
-  { id: crypto.randomUUID(), name: "Google", url: "https://google.com" },
-  { id: crypto.randomUUID(), name: "Gmail", url: "https://mail.google.com" },
-  { id: crypto.randomUUID(), name: "Calendar", url: "https://calendar.google.com" }
-];
+function getFromStorage(key, fallbackValue) {
+  const savedValue = localStorage.getItem(key);
 
-const clockEl = document.getElementById("clock");
-const dateTextEl = document.getElementById("dateText");
-const greetingTextEl = document.getElementById("greetingText");
-const nameForm = document.getElementById("nameForm");
-const nameInput = document.getElementById("nameInput");
-const themeToggleBtn = document.getElementById("themeToggleBtn");
+  // Belum ada data tersimpan, jadi pakai bawaan.
+  if (savedValue === null) {
+    return fallbackValue;
+  }
 
-const timerDisplay = document.getElementById("timerDisplay");
-const timerStatus = document.getElementById("timerStatus");
-const timerSettingForm = document.getElementById("timerSettingForm");
-const timerMinutesInput = document.getElementById("timerMinutesInput");
-const startTimerBtn = document.getElementById("startTimerBtn");
-const stopTimerBtn = document.getElementById("stopTimerBtn");
-const resetTimerBtn = document.getElementById("resetTimerBtn");
-
-const taskForm = document.getElementById("taskForm");
-const taskInput = document.getElementById("taskInput");
-const taskList = document.getElementById("taskList");
-const taskMessage = document.getElementById("taskMessage");
-const sortTasksBtn = document.getElementById("sortTasksBtn");
-
-const linkForm = document.getElementById("linkForm");
-const linkNameInput = document.getElementById("linkNameInput");
-const linkUrlInput = document.getElementById("linkUrlInput");
-const quickLinks = document.getElementById("quickLinks");
-const linkMessage = document.getElementById("linkMessage");
-
-let tasks = loadFromStorage(STORAGE_KEYS.tasks, []);
-let links = loadFromStorage(STORAGE_KEYS.links, DEFAULT_LINKS);
-let userName = localStorage.getItem(STORAGE_KEYS.name) || "";
-let selectedMinutes = Number(localStorage.getItem(STORAGE_KEYS.timerMinutes)) || 25;
-
-let timerSeconds = selectedMinutes * 60;
-let timerIntervalId = null;
-let isSortedAscending = true;
-
-function loadFromStorage(key, fallback) {
   try {
-    const savedValue = localStorage.getItem(key);
-    return savedValue ? JSON.parse(savedValue) : fallback;
+    return JSON.parse(savedValue);
   } catch (error) {
-    console.warn(`Failed to load ${key}`, error);
-    return fallback;
+    // Kalau datanya rusak, pakai bawaan lagi.
+    return fallbackValue;
   }
 }
 
@@ -62,67 +28,136 @@ function saveToStorage(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
-function updateClock() {
+// Ambil elemen HTML yang nanti sering dipakai.
+
+const clockElement = document.getElementById("clock");
+const dateTextElement = document.getElementById("dateText");
+const greetingTextElement = document.getElementById("greetingText");
+const themeToggleButton = document.getElementById("themeToggle");
+
+const nameForm = document.getElementById("nameForm");
+const nameInput = document.getElementById("nameInput");
+
+const timerDisplay = document.getElementById("timerDisplay");
+const startTimerButton = document.getElementById("startTimerBtn");
+const stopTimerButton = document.getElementById("stopTimerBtn");
+const resetTimerButton = document.getElementById("resetTimerBtn");
+const timerSettingForm = document.getElementById("timerSettingForm");
+const timerMinuteInput = document.getElementById("timerMinuteInput");
+
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+const taskMessage = document.getElementById("taskMessage");
+const sortTasksButton = document.getElementById("sortTasksBtn");
+
+const linkForm = document.getElementById("linkForm");
+const linkNameInput = document.getElementById("linkNameInput");
+const linkUrlInput = document.getElementById("linkUrlInput");
+const quickLinksContainer = document.getElementById("quickLinks");
+const linkMessage = document.getElementById("linkMessage");
+
+// Data awal. Kalau sebelumnya sudah tersimpan, datanya otomatis dipakai lagi.
+
+let userName = getFromStorage(STORAGE_KEYS.name, "");
+let tasks = getFromStorage(STORAGE_KEYS.tasks, []);
+let links = getFromStorage(STORAGE_KEYS.links, [
+  { id: crypto.randomUUID(), name: "Google", url: "https://google.com" },
+  { id: crypto.randomUUID(), name: "Gmail", url: "https://mail.google.com" },
+  { id: crypto.randomUUID(), name: "Calendar", url: "https://calendar.google.com" }
+]);
+
+let timerMinutes = getFromStorage(STORAGE_KEYS.timerMinutes, 25);
+let timerSecondsLeft = timerMinutes * 60;
+let timerIntervalId = null;
+let isSortDoneFirst = false;
+
+// Update jam, tanggal, dan sapaan di bagian atas.
+
+function getGreetingByHour(hour) {
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  if (hour >= 12 && hour < 17) return "Good Afternoon";
+  if (hour >= 17 && hour < 21) return "Good Evening";
+  return "Good Night";
+}
+
+function updateClockAndGreeting() {
   const now = new Date();
 
-  clockEl.textContent = now.toLocaleTimeString("en-GB", {
+  const timeText = now.toLocaleTimeString("en-US", {
+    hour12: false,
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit"
   });
 
-  dateTextEl.textContent = now.toLocaleDateString("en-US", {
+  const dateText = now.toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
     day: "numeric"
   });
 
-  greetingTextEl.textContent = getGreeting(now.getHours());
+  const greeting = getGreetingByHour(now.getHours());
+  const namePart = userName ? `, ${userName}` : "";
+
+  clockElement.textContent = timeText;
+  dateTextElement.textContent = dateText;
+  greetingTextElement.textContent = `${greeting}${namePart}`;
 }
 
-function getGreeting(hour) {
-  const nameSuffix = userName ? `, ${userName}` : "";
+nameForm.addEventListener("submit", function (event) {
+  event.preventDefault();
 
-  if (hour >= 5 && hour < 12) return `Good Morning${nameSuffix}`;
-  if (hour >= 12 && hour < 17) return `Good Afternoon${nameSuffix}`;
-  if (hour >= 17 && hour < 21) return `Good Evening${nameSuffix}`;
-  return `Good Night${nameSuffix}`;
-}
+  userName = nameInput.value.trim();
+  saveToStorage(STORAGE_KEYS.name, userName);
+  nameInput.value = "";
+  updateClockAndGreeting();
+});
+
+// Tema terang/gelap disimpan supaya tidak berubah saat halaman dibuka lagi.
 
 function applyTheme(theme) {
-  const isDark = theme === "dark";
-  document.body.classList.toggle("dark", isDark);
-  themeToggleBtn.textContent = isDark ? "☀️" : "🌙";
-  localStorage.setItem(STORAGE_KEYS.theme, theme);
+  const isDarkMode = theme === "dark";
+  document.body.classList.toggle("dark-mode", isDarkMode);
+  themeToggleButton.textContent = isDarkMode ? "☀️" : "🌙";
 }
 
-function formatTime(totalSeconds) {
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+const savedTheme = getFromStorage(STORAGE_KEYS.theme, "light");
+applyTheme(savedTheme);
+
+themeToggleButton.addEventListener("click", function () {
+  const nextTheme = document.body.classList.contains("dark-mode") ? "light" : "dark";
+  saveToStorage(STORAGE_KEYS.theme, nextTheme);
+  applyTheme(nextTheme);
+});
+
+// Timer fokus. Awalnya 25 menit, tapi bisa diubah dari form.
+
+function formatTimer(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
 function renderTimer() {
-  timerDisplay.textContent = formatTime(timerSeconds);
-  timerMinutesInput.value = selectedMinutes;
+  timerDisplay.textContent = formatTimer(timerSecondsLeft);
+  timerMinuteInput.placeholder = String(timerMinutes);
 }
 
 function startTimer() {
-  if (timerIntervalId) return;
+  // Cegah timer dobel kalau tombol Start ditekan berkali-kali.
+  if (timerIntervalId !== null) return;
 
-  timerStatus.textContent = "Running";
-  startTimerBtn.disabled = true;
-
-  timerIntervalId = setInterval(() => {
-    if (timerSeconds <= 0) {
+  timerIntervalId = setInterval(function () {
+    if (timerSecondsLeft <= 0) {
       stopTimer();
-      timerStatus.textContent = "Done";
-      alert("Focus session complete!");
+      alert("Sesi fokus telah selesai. Silakan beristirahat sejenak sebelum melanjutkan aktivitas.");
       return;
     }
 
-    timerSeconds -= 1;
+    timerSecondsLeft -= 1;
     renderTimer();
   }, 1000);
 }
@@ -130,167 +165,224 @@ function startTimer() {
 function stopTimer() {
   clearInterval(timerIntervalId);
   timerIntervalId = null;
-  timerStatus.textContent = "Paused";
-  startTimerBtn.disabled = false;
 }
 
 function resetTimer() {
   stopTimer();
-  timerSeconds = selectedMinutes * 60;
-  timerStatus.textContent = "Ready";
+  timerSecondsLeft = timerMinutes * 60;
   renderTimer();
 }
 
-function setTimerMinutes(minutes) {
-  selectedMinutes = minutes;
-  localStorage.setItem(STORAGE_KEYS.timerMinutes, String(selectedMinutes));
-  timerSeconds = selectedMinutes * 60;
-  timerStatus.textContent = "Ready";
-  renderTimer();
+startTimerButton.addEventListener("click", startTimer);
+stopTimerButton.addEventListener("click", stopTimer);
+resetTimerButton.addEventListener("click", resetTimer);
+
+timerSettingForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  const newMinutes = Number(timerMinuteInput.value);
+
+  if (!Number.isFinite(newMinutes) || newMinutes < 1 || newMinutes > 180) {
+    alert("Masukkan durasi antara 1 sampai 180 menit.");
+    return;
+  }
+
+  timerMinutes = newMinutes;
+  saveToStorage(STORAGE_KEYS.timerMinutes, timerMinutes);
+  timerMinuteInput.value = "";
+  resetTimer();
+});
+
+// Semua urusan task ada di bagian ini.
+
+function showTaskMessage(message) {
+  taskMessage.textContent = message;
+
+  setTimeout(function () {
+    taskMessage.textContent = "";
+  }, 2500);
+}
+
+function saveTasks() {
+  saveToStorage(STORAGE_KEYS.tasks, tasks);
 }
 
 function renderTasks() {
   taskList.innerHTML = "";
 
   if (tasks.length === 0) {
-    taskList.innerHTML = `<li class="empty-state">No tasks yet. Add your first task.</li>`;
+    taskList.innerHTML = '<p class="empty-state">Belum ada task. Silakan tambahkan task terlebih dahulu.</p>';
     return;
   }
 
-  tasks.forEach((task) => {
+  const visibleTasks = [...tasks];
+
+  if (isSortDoneFirst) {
+    // Saat sort aktif, task yang belum selesai ditampilkan dulu.
+    visibleTasks.sort(function (a, b) {
+      return Number(a.isDone) - Number(b.isDone);
+    });
+  }
+
+  visibleTasks.forEach(function (task) {
     const taskItem = document.createElement("li");
-    taskItem.className = `task-item ${task.done ? "done" : ""}`;
+    taskItem.className = "task-item";
 
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
-    checkbox.checked = task.done;
-    checkbox.ariaLabel = `Mark ${task.title} as done`;
-    checkbox.addEventListener("change", () => toggleTask(task.id));
+    checkbox.checked = task.isDone;
+    checkbox.addEventListener("change", function () {
+      toggleTaskDone(task.id);
+    });
 
     const title = document.createElement("span");
-    title.className = "task-title";
+    title.className = task.isDone ? "task-title done" : "task-title";
     title.textContent = task.title;
 
-    const editBtn = document.createElement("button");
-    editBtn.type = "button";
-    editBtn.className = "small-btn";
-    editBtn.textContent = "Edit";
-    editBtn.addEventListener("click", () => editTask(task.id));
+    const editButton = document.createElement("button");
+    editButton.type = "button";
+    editButton.className = "secondary-button small-button";
+    editButton.textContent = "Edit";
+    editButton.addEventListener("click", function () {
+      editTask(task.id);
+    });
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.type = "button";
-    deleteBtn.className = "small-btn delete-btn";
-    deleteBtn.textContent = "Delete";
-    deleteBtn.addEventListener("click", () => deleteTask(task.id));
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "delete-button small-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", function () {
+      deleteTask(task.id);
+    });
 
-    taskItem.append(checkbox, title, editBtn, deleteBtn);
+    taskItem.append(checkbox, title, editButton, deleteButton);
     taskList.appendChild(taskItem);
   });
 }
 
-function normalizeText(value) {
-  return value.trim().replace(/\s+/g, " ").toLowerCase();
-}
-
 function addTask(title) {
-  const cleanTitle = title.trim().replace(/\s+/g, " ");
+  const cleanTitle = title.trim();
 
   if (!cleanTitle) {
-    showTaskMessage("Task cannot be empty.");
+    showTaskMessage("Task tidak boleh kosong.");
     return;
   }
 
-  const isDuplicate = tasks.some((task) => normalizeText(task.title) === normalizeText(cleanTitle));
+  const alreadyExists = tasks.some(function (task) {
+    return task.title.toLowerCase() === cleanTitle.toLowerCase();
+  });
 
-  if (isDuplicate) {
-    showTaskMessage("Duplicate task blocked.");
+  // Cek duplikat agar task yang sama tidak masuk dua kali.
+  if (alreadyExists) {
+    showTaskMessage("Task ini sudah ada. Silakan masukkan task yang berbeda.");
     return;
   }
 
   tasks.push({
     id: crypto.randomUUID(),
     title: cleanTitle,
-    done: false,
-    createdAt: Date.now()
+    isDone: false,
+    createdAt: new Date().toISOString()
   });
 
-  saveToStorage(STORAGE_KEYS.tasks, tasks);
-  taskInput.value = "";
-  showTaskMessage("");
+  saveTasks();
   renderTasks();
 }
 
-function toggleTask(id) {
-  tasks = tasks.map((task) => {
-    if (task.id !== id) return task;
-    return { ...task, done: !task.done };
+function toggleTaskDone(taskId) {
+  tasks = tasks.map(function (task) {
+    if (task.id !== taskId) return task;
+
+    return {
+      ...task,
+      isDone: !task.isDone
+    };
   });
 
-  saveToStorage(STORAGE_KEYS.tasks, tasks);
+  saveTasks();
   renderTasks();
 }
 
-function editTask(id) {
-  const task = tasks.find((item) => item.id === id);
-  if (!task) return;
+function editTask(taskId) {
+  const selectedTask = tasks.find(function (task) {
+    return task.id === taskId;
+  });
 
-  const newTitle = prompt("Edit task:", task.title);
+  if (!selectedTask) return;
+
+  const newTitle = prompt("Edit task:", selectedTask.title);
+
+  // Kalau user membatalkan edit, task tidak diubah.
   if (newTitle === null) return;
 
-  const cleanTitle = newTitle.trim().replace(/\s+/g, " ");
+  const cleanTitle = newTitle.trim();
 
   if (!cleanTitle) {
-    showTaskMessage("Task cannot be empty.");
+    showTaskMessage("Task tidak boleh kosong.");
     return;
   }
 
-  const isDuplicate = tasks.some((item) => item.id !== id && normalizeText(item.title) === normalizeText(cleanTitle));
+  const duplicateTask = tasks.some(function (task) {
+    return task.id !== taskId && task.title.toLowerCase() === cleanTitle.toLowerCase();
+  });
 
-  if (isDuplicate) {
-    showTaskMessage("Duplicate task blocked.");
+  if (duplicateTask) {
+    showTaskMessage("Nama task sudah dipakai.");
     return;
   }
 
-  tasks = tasks.map((item) => {
-    if (item.id !== id) return item;
-    return { ...item, title: cleanTitle };
+  tasks = tasks.map(function (task) {
+    if (task.id !== taskId) return task;
+
+    return {
+      ...task,
+      title: cleanTitle
+    };
   });
 
-  saveToStorage(STORAGE_KEYS.tasks, tasks);
-  showTaskMessage("");
+  saveTasks();
   renderTasks();
 }
 
-function deleteTask(id) {
-  tasks = tasks.filter((task) => task.id !== id);
-  saveToStorage(STORAGE_KEYS.tasks, tasks);
-  renderTasks();
-}
-
-function sortTasks() {
-  tasks.sort((a, b) => {
-    const titleA = a.title.toLowerCase();
-    const titleB = b.title.toLowerCase();
-
-    if (titleA < titleB) return isSortedAscending ? -1 : 1;
-    if (titleA > titleB) return isSortedAscending ? 1 : -1;
-    return 0;
+function deleteTask(taskId) {
+  tasks = tasks.filter(function (task) {
+    return task.id !== taskId;
   });
 
-  isSortedAscending = !isSortedAscending;
-  saveToStorage(STORAGE_KEYS.tasks, tasks);
+  saveTasks();
   renderTasks();
 }
 
-function showTaskMessage(message) {
-  taskMessage.textContent = message;
+taskForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+  addTask(taskInput.value);
+  taskInput.value = "";
+});
+
+sortTasksButton.addEventListener("click", function () {
+  isSortDoneFirst = !isSortDoneFirst;
+  sortTasksButton.textContent = isSortDoneFirst ? "Unsort" : "Sort";
+  renderTasks();
+});
+
+// Quick link untuk website yang sering dibuka.
+
+function showLinkMessage(message) {
+  linkMessage.textContent = message;
+
+  setTimeout(function () {
+    linkMessage.textContent = "";
+  }, 2500);
 }
 
-function ensureUrl(url) {
+function saveLinks() {
+  saveToStorage(STORAGE_KEYS.links, links);
+}
+
+function normalizeUrl(url) {
   const cleanUrl = url.trim();
 
-  if (!cleanUrl) return "";
-
+  // Kalau hanya menulis google.com, https:// ditambahkan otomatis.
   if (cleanUrl.startsWith("http://") || cleanUrl.startsWith("https://")) {
     return cleanUrl;
   }
@@ -299,51 +391,52 @@ function ensureUrl(url) {
 }
 
 function renderLinks() {
-  quickLinks.innerHTML = "";
+  quickLinksContainer.innerHTML = "";
 
   if (links.length === 0) {
-    quickLinks.innerHTML = `<p class="empty-state">No quick links yet.</p>`;
+    quickLinksContainer.innerHTML = '<p class="empty-state">Belum ada quick link.</p>';
     return;
   }
 
-  links.forEach((link) => {
+  links.forEach(function (link) {
+    const linkWrapper = document.createElement("span");
+    linkWrapper.className = "quick-link-item";
+
     const anchor = document.createElement("a");
-    anchor.className = "quick-link";
     anchor.href = link.url;
     anchor.target = "_blank";
     anchor.rel = "noopener noreferrer";
+    anchor.textContent = link.name;
+    anchor.style.color = "inherit";
+    anchor.style.textDecoration = "none";
 
-    const label = document.createElement("span");
-    label.textContent = link.name;
-
-    const removeBtn = document.createElement("button");
-    removeBtn.type = "button";
-    removeBtn.className = "remove-link-btn";
-    removeBtn.textContent = "×";
-    removeBtn.ariaLabel = `Remove ${link.name}`;
-    removeBtn.addEventListener("click", (event) => {
-      event.preventDefault();
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "remove-link-button";
+    removeButton.textContent = "×";
+    removeButton.setAttribute("aria-label", `Hapus link ${link.name}`);
+    removeButton.addEventListener("click", function () {
       deleteLink(link.id);
     });
 
-    anchor.append(label, removeBtn);
-    quickLinks.appendChild(anchor);
+    linkWrapper.append(anchor, removeButton);
+    quickLinksContainer.appendChild(linkWrapper);
   });
 }
 
 function addLink(name, url) {
-  const cleanName = name.trim().replace(/\s+/g, " ");
-  const cleanUrl = ensureUrl(url);
+  const cleanName = name.trim();
+  const cleanUrl = normalizeUrl(url);
 
   if (!cleanName || !cleanUrl) {
-    showLinkMessage("Link name and URL are required.");
+    showLinkMessage("Nama link dan URL wajib diisi.");
     return;
   }
 
   try {
     new URL(cleanUrl);
   } catch (error) {
-    showLinkMessage("Please enter a valid URL.");
+    showLinkMessage("URL tidak valid. Contoh: https://google.com");
     return;
   }
 
@@ -353,74 +446,32 @@ function addLink(name, url) {
     url: cleanUrl
   });
 
-  saveToStorage(STORAGE_KEYS.links, links);
+  saveLinks();
+  renderLinks();
+}
+
+function deleteLink(linkId) {
+  links = links.filter(function (link) {
+    return link.id !== linkId;
+  });
+
+  saveLinks();
+  renderLinks();
+}
+
+linkForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+
+  addLink(linkNameInput.value, linkUrlInput.value);
   linkNameInput.value = "";
   linkUrlInput.value = "";
-  showLinkMessage("");
-  renderLinks();
-}
-
-function deleteLink(id) {
-  links = links.filter((link) => link.id !== id);
-  saveToStorage(STORAGE_KEYS.links, links);
-  renderLinks();
-}
-
-function showLinkMessage(message) {
-  linkMessage.textContent = message;
-}
-
-nameForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-
-  userName = nameInput.value.trim().replace(/\s+/g, " ");
-  localStorage.setItem(STORAGE_KEYS.name, userName);
-  updateClock();
 });
 
-themeToggleBtn.addEventListener("click", () => {
-  const currentTheme = document.body.classList.contains("dark") ? "dark" : "light";
-  applyTheme(currentTheme === "dark" ? "light" : "dark");
-});
+// Jalankan tampilan awal saat halaman dibuka.
 
-timerSettingForm.addEventListener("submit", (event) => {
-  event.preventDefault();
+updateClockAndGreeting();
+setInterval(updateClockAndGreeting, 1000);
 
-  const minutes = Number(timerMinutesInput.value);
-
-  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 180) {
-    alert("Timer must be between 1 and 180 minutes.");
-    return;
-  }
-
-  setTimerMinutes(minutes);
-});
-
-startTimerBtn.addEventListener("click", startTimer);
-stopTimerBtn.addEventListener("click", stopTimer);
-resetTimerBtn.addEventListener("click", resetTimer);
-
-taskForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  addTask(taskInput.value);
-});
-
-sortTasksBtn.addEventListener("click", sortTasks);
-
-linkForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  addLink(linkNameInput.value, linkUrlInput.value);
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-  const savedTheme = localStorage.getItem(STORAGE_KEYS.theme) || "light";
-
-  nameInput.value = userName;
-  applyTheme(savedTheme);
-  updateClock();
-  renderTimer();
-  renderTasks();
-  renderLinks();
-
-  setInterval(updateClock, 1000);
-});
+renderTimer();
+renderTasks();
+renderLinks();

@@ -1,35 +1,34 @@
-# CodingCamp-1June26-Farras
-
 # To-Do List Life Dashboard
 
-A simple life dashboard built with HTML, CSS, and Vanilla JavaScript.
+Project ini dibuat sebagai tugas CodingCamp: **To-Do List Life Dashboard**.
 
-## Features
+## Fitur Utama
 
-### Required MVP
-- Current time and date
-- Greeting based on time of day
-- 25-minute focus timer
-- Start, stop, and reset timer buttons
-- Add tasks
-- Edit tasks
-- Mark tasks as done
-- Delete tasks
-- Save tasks using Local Storage
-- Add quick links
-- Save quick links using Local Storage
-
-### Challenge Features
+- Greeting berdasarkan waktu
+- Jam dan tanggal real-time
+- Custom name di greeting
+- Focus Timer / Pomodoro
+- Ubah durasi Pomodoro
+- To-Do List:
+  - Add task
+  - Edit task
+  - Mark as done
+  - Delete task
+  - Prevent duplicate tasks
+  - Sort tasks
+- Quick Links:
+  - Add link
+  - Membuka website favorit
+  - Delete link
 - Light / Dark mode
-- Custom name in greeting
-- Change Pomodoro time
-- Prevent duplicate tasks
-- Sort tasks
+- Data tersimpan di Local Storage
 
-## Folder Rules
+## Struktur Folder
 
 ```txt
-CodingCamp-18May26-MuhammadFarrasZuhair/
+.
+├── .kiro/
+│   └── spec.md
 ├── css/
 │   └── style.css
 ├── js/
@@ -38,16 +37,24 @@ CodingCamp-18May26-MuhammadFarrasZuhair/
 └── README.md
 ```
 
-## How to Run
+## Cara Menjalankan
 
-Open `index.html` in a browser.
+1. Download atau clone repository.
+2. Buka file `index.html` di browser.
+3. Tidak perlu install package apa pun.
 
-No backend server is required.
-
-## Tech Stack
+## Teknologi
 
 - HTML
 - CSS
 - Vanilla JavaScript
-- Browser Local Storage API
+- Browser Local Storage
 
+## Deployment GitHub Pages
+
+1. Push semua file ke GitHub.
+2. Masuk ke repository GitHub.
+3. Buka **Settings**.
+4. Pilih **Pages**.
+5. Source: pilih branch `main` dan folder `/root`.
+6. Simpan dan tunggu link GitHub Pages aktif.
